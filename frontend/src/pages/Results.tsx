@@ -151,16 +151,21 @@ export default function Results() {
     return () => clearInterval(id)
   }, [state?.mode])
 
-  // ── Auto-open poster once per session, 400ms after picks are available ───────
-  const picksReady = !!state?.picks
+  // ── Auto-open poster once submission has settled (not while guest name modal may be open) ──
   useEffect(() => {
-    if (hasAutoOpened || !picksReady) return
+    const submissionSettled =
+      submitStatus === 'success' ||
+      submitStatus === 'error' ||
+      submitStatus === 'already_submitted'
+
+    if (!submissionSettled || hasAutoOpened) return
+
     const t = setTimeout(() => {
       setPosterOpen(true)
       setHasAutoOpened(true)
-    }, 400)
+    }, 200)
     return () => clearTimeout(t)
-  }, [hasAutoOpened, picksReady])
+  }, [submitStatus, hasAutoOpened])
 
   async function doSubmit(name: string) {
     if (!state?.picks) return
