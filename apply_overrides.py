@@ -123,7 +123,8 @@ SPINNERS = [
     "GB Hogg",          # SRH — off-break (Brad Hogg)
     "DS Rathi",       # SRH — off-break (Digvesh Rathi)
     "J Botha",            # SRH — off-break  (Johan Botha)
-    "AM Ghazanfar",          # SRH — off-break (Allah Ghazanfar)"
+    "AM Ghazanfar",          # SRH — off-break (Allah Ghazanfar)
+    "RE van der Merwe",      # RCB — left-arm orthodox
 
 ]
 
@@ -181,6 +182,15 @@ WICKETKEEPERS = [
 # Deduplicate
 WICKETKEEPERS = list(dict.fromkeys(w.strip() for w in WICKETKEEPERS if w.strip()))
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ROLE_PRIMARY OVERRIDES (force role_primary unconditionally, all seasons)
+# Use when classify_roles / spinner list only flips Pace Bowlers and misses
+# All-Rounders whose primary role should still be labelled as a bowler type.
+# ─────────────────────────────────────────────────────────────────────────────
+ROLE_PRIMARY_OVERRIDES = {
+    'RE van der Merwe': 'Spin Bowler',  # left-arm orthodox; bowl-AR classified as spinner
+}
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # APPLY OVERRIDES
@@ -233,6 +243,24 @@ def apply_keeper_overrides(cur, keepers):
         """, (name,))
         total += cur.rowcount
 
+    return total
+
+
+def apply_role_primary_overrides(cur, overrides):
+    """
+    Force role_primary unconditionally for specific players across all seasons.
+    Does NOT touch role_category. Used when the spinner list logic (which only
+    flips Pace Bowlers) won't reach All-Rounder rows.
+    Returns count of rows updated.
+    """
+    total = 0
+    for name, role in overrides.items():
+        cur.execute("""
+            UPDATE player_seasons
+            SET role_primary = ?
+            WHERE player_name = ?
+        """, (role, name))
+        total += cur.rowcount
     return total
 
 
@@ -357,13 +385,17 @@ if __name__ == "__main__":
     print(f"Spinner list: {len(SPINNERS)} unique names")
     print(f"Keeper list : {len(WICKETKEEPERS)} unique names\n")
 
-    print("Step 1/2 — Applying spinner overrides...")
+    print("Step 1/3 — Applying spinner overrides...")
     spin_updated = apply_spinner_overrides(cur, SPINNERS)
     print(f"  Rows flipped to Spin Bowler: {spin_updated}")
 
-    print("\nStep 2/2 — Applying keeper overrides...")
+    print("\nStep 2/3 — Applying keeper overrides...")
     keep_updated = apply_keeper_overrides(cur, WICKETKEEPERS)
     print(f"  Rows updated as Wicketkeeper: {keep_updated}")
+
+    print("\nStep 3/3 — Applying role_primary overrides...")
+    role_updated = apply_role_primary_overrides(cur, ROLE_PRIMARY_OVERRIDES)
+    print(f"  Rows updated: {role_updated}")
 
     conn.commit()
 

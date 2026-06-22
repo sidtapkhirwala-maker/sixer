@@ -59,7 +59,7 @@ OVERSEAS_PLAYERS = [
     "M Jansen", "PWA Mulder", "T Stubbs", "D Brevis", "LG Pretorius",
     "D Ferreira", "MP Breetzke", "N Burger", "K Maphaka", "G Coetzee",
     "A Nortje", "RK Kleinveldt", "R Theron", "BE Hendricks",
-    "H Viljoen", "D Olivier", "C Bosch", "ST Jayasuriya", "HM Amla", "RD Rickelton",
+    "H Viljoen", "GC Viljoen", "D Olivier", "C Bosch", "ST Jayasuriya", "HM Amla", "RD Rickelton",
 
     # ── West Indies ──────────────────────────────────────────────────────────
     "CH Gayle", "DJ Bravo", "KA Pollard", "LMP Simmons", "DR Smith",
@@ -70,7 +70,7 @@ OVERSEAS_PLAYERS = [
     "AJ Hosein", "R Shepherd", "S Rutherford", "SSJ Brooks",
     "S Joseph", "N Pooran", "OC McCoy", "AS Joseph", "B Jacobs",
     "DM Bravo", "AR Nurse", "S Badree", "OF Smith", "D Drakes",
-    "K Paul", "O Thomas", "J Charles", "Azhar Mahmood", "SM Harwood",
+    "K Paul", "KMA Paul", "O Thomas", "J Charles", "Azhar Mahmood", "SM Harwood",
 
     # ── New Zealand ──────────────────────────────────────────────────────────
     "BB McCullum", "SP Fleming", "SB Styris", "JD Ryder", "JDP Oram",
@@ -110,7 +110,7 @@ OVERSEAS_PLAYERS = [
     # ── Other / Associate nations ────────────────────────────────────────────
     "Sikandar Raza", "J Little", "PR Stirling", "GH Dockrell",
     "WB Rankin", "RN ten Doeschate", "T van der Gugten", "D Wiese",
-    "JN Frylinck",
+    "JN Frylinck", "RE van der Merwe", "S Lamichhane",
 ]
 
 # Deduplicate
