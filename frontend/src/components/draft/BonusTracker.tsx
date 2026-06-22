@@ -189,6 +189,19 @@ function noXStatus(condition: boolean, len: number): PenaltyStatus {
   return 'clear'
 }
 
+function thresholdStatus(
+  currentCount: number,
+  threshold: number,
+  xiLength: number,
+): PenaltyStatus {
+  const rem = 11 - xiLength
+  const maxFinal = currentCount + rem
+  if (xiLength === 11) return currentCount < threshold ? 'active' : 'clear'
+  if (maxFinal < threshold) return 'active'
+  if (maxFinal === threshold) return 'at-risk'
+  return 'clear'
+}
+
 const PENALTIES: PenaltyDef[] = [
   {
     name: 'No Keeper',
@@ -222,14 +235,14 @@ const PENALTIES: PenaltyDef[] = [
     name: 'Thin Batting',
     value: 8,
     description: 'Trigger: fewer than 6 batters, wicketkeepers, or all-rounders in your XI. Penalty: -8.',
-    status: (xi) => noXStatus(countBattingSide(xi) < 6, xi.length),
+    status: (xi) => thresholdStatus(countBattingSide(xi), 6, xi.length),
     detail: (xi) => `Only ${countBattingSide(xi)} bat-capable players`,
   },
   {
     name: 'Light on Bowling',
     value: 10,
     description: 'Trigger: fewer than 5 bowlers or all-rounders in your XI. Penalty: -10.',
-    status: (xi) => (xi.length === 11 && countBowlingSide(xi) < 5) ? 'active' : 'clear',
+    status: (xi) => thresholdStatus(countBowlingSide(xi), 5, xi.length),
     detail: (xi) => `Only ${countBowlingSide(xi)} bowling options`,
   },
   {

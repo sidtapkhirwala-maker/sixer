@@ -130,127 +130,128 @@ export function SharePoster({ record, sixerScore, tier, mode, dailyNumber, xi, b
         letterSpacing: 'normal',
       }}
     >
-      {/* ── Main content (flex: 1 so footer stays at bottom) ─────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-
-        {/* 1. Headline block */}
-        <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          {isDaily && (
-            <p style={body(18, C.saffron, {
-              fontWeight: 700,
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
-              marginBottom: 10,
-            })}>SIXER DAILY{dailyNumber != null ? ` #${dailyNumber}` : ''}</p>
-          )}
-          <p style={body(34, C.cream, {
+      {/* 1. Headline block */}
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        {isDaily && (
+          <p style={body(18, C.saffron, {
             fontWeight: 700,
-            letterSpacing: '0.15em',
+            letterSpacing: '0.22em',
             textTransform: 'uppercase',
-            marginBottom: 4,
-          })}>I BUILT A</p>
+            marginBottom: 10,
+          })}>SIXER DAILY{dailyNumber != null ? ` #${dailyNumber}` : ''}</p>
+        )}
+        <p style={body(34, C.cream, {
+          fontWeight: 700,
+          letterSpacing: '0.15em',
+          textTransform: 'uppercase',
+          marginBottom: 4,
+        })}>I BUILT A</p>
 
-          <p style={display(118, C.saffron, {
-            letterSpacing: '-0.02em',
-            textShadow: '0 0 40px rgba(255,107,26,0.4)',
-            textTransform: 'uppercase',
-          })}>{record} TEAM</p>
+        <p style={display(118, C.saffron, {
+          letterSpacing: '-0.02em',
+          textShadow: '0 0 40px rgba(255,107,26,0.4)',
+          textTransform: 'uppercase',
+        })}>{record} TEAM</p>
 
-          {is160 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 14 }}>
-              {Array.from({ length: 6 }, (_, i) => (
-                <span key={i} style={{ color: C.saffron, fontSize: 22, lineHeight: 1 }}>▲</span>
-              ))}
+        {is160 && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 14 }}>
+            {Array.from({ length: 6 }, (_, i) => (
+              <span key={i} style={{ color: C.saffron, fontSize: 22, lineHeight: 1 }}>▲</span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 2. Stats row */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 26 }}>
+        {/* Sixer Score */}
+        <div style={cardStyle}>
+          <p style={label(C.cream)}>SIXER SCORE</p>
+          <p style={display(54, C.saffron, { fontFeatureSettings: '"tnum"' })}>
+            {sixerScore.toFixed(2)}
+          </p>
+        </div>
+
+        {/* Tier */}
+        <div style={cardStyle}>
+          <p style={label(C.cream)}>TIER</p>
+          <p style={display(68, tierColor)}>{tier}</p>
+        </div>
+
+        {/* Mode */}
+        <div style={cardStyle}>
+          <p style={label(C.cream)}>MODE</p>
+          <p style={display(34, C.cream)}>{modeLabel}</p>
+        </div>
+      </div>
+
+      {/* 3. YOUR XI */}
+      <div style={{ marginBottom: 18 }}>
+        <p style={body(13, C.muted, {
+          fontWeight: 700, letterSpacing: '0.15em',
+          textTransform: 'uppercase', marginBottom: 8,
+        })}>YOUR XI</p>
+
+        {xi.map((player, i) => {
+          const chip = roleChipColors(player.role_primary)
+          const code = getHistoricalShortCode(player.franchise_short, player.season_year)
+          const name = player.display_name || player.player_name
+
+          return (
+            <div
+              key={player.id}
+              style={{
+                display: 'flex', alignItems: 'center', height: 50, gap: 12,
+                borderBottom: '1px solid rgba(245,245,240,0.06)',
+              }}
+            >
+              {/* # */}
+              <span style={body(25, 'rgba(245,245,240,0.38)', {
+                width: 44, textAlign: 'right', flexShrink: 0,
+                fontFeatureSettings: '"tnum"',
+              })}>{i + 1}</span>
+
+              {/* Name */}
+              <span style={body(25, C.cream, {
+                flex: 1, overflow: 'hidden', whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis', fontWeight: 700,
+              })}>{name}</span>
+
+              {/* Role chip */}
+              <span style={{
+                fontFamily: "'Inter', sans-serif",
+                backgroundColor: chip.bg, color: chip.color,
+                fontSize: 13, fontWeight: 700,
+                padding: '4px 12px', borderRadius: 20, flexShrink: 0,
+                textTransform: 'uppercase', letterSpacing: '0.04em',
+                whiteSpace: 'nowrap',
+              }}>{formatRolePoster(player.role_primary)}</span>
+
+              {/* Franchise · Year */}
+              <span style={body(21, 'rgba(245,245,240,0.58)', {
+                flexShrink: 0, whiteSpace: 'nowrap',
+                fontFeatureSettings: '"tnum"',
+              })}>{code}·{player.season_year}</span>
+
+              {/* Overseas ✈ */}
+              <span style={{
+                fontSize: 18, width: 28, flexShrink: 0, textAlign: 'center',
+                color: player.is_overseas ? 'rgba(245,245,240,0.55)' : 'transparent',
+              }}>✈</span>
+
+              {/* Player score */}
+              <span style={body(25, C.saffron, {
+                width: 78, textAlign: 'right', flexShrink: 0,
+                fontWeight: 700, fontFeatureSettings: '"tnum"',
+              })}>{fmtScore(player.player_score)}</span>
             </div>
-          )}
-        </div>
+          )
+        })}
+      </div>
 
-        {/* 2. Stats row */}
-        <div style={{ display: 'flex', gap: 16, marginBottom: 26 }}>
-          {/* Sixer Score */}
-          <div style={cardStyle}>
-            <p style={label(C.cream)}>SIXER SCORE</p>
-            <p style={display(54, C.saffron, { fontFeatureSettings: '"tnum"' })}>
-              {sixerScore.toFixed(2)}
-            </p>
-          </div>
-
-          {/* Tier */}
-          <div style={cardStyle}>
-            <p style={label(C.cream)}>TIER</p>
-            <p style={display(68, tierColor)}>{tier}</p>
-          </div>
-
-          {/* Mode */}
-          <div style={cardStyle}>
-            <p style={label(C.cream)}>MODE</p>
-            <p style={display(34, C.cream)}>{modeLabel}</p>
-          </div>
-        </div>
-
-        {/* 3. YOUR XI */}
-        <div style={{ marginBottom: 18 }}>
-          <p style={body(13, C.muted, {
-            fontWeight: 700, letterSpacing: '0.15em',
-            textTransform: 'uppercase', marginBottom: 8,
-          })}>YOUR XI</p>
-
-          {xi.map((player, i) => {
-            const chip = roleChipColors(player.role_primary)
-            const code = getHistoricalShortCode(player.franchise_short, player.season_year)
-            const name = player.display_name || player.player_name
-
-            return (
-              <div
-                key={player.id}
-                style={{
-                  display: 'flex', alignItems: 'center', height: 50, gap: 12,
-                  borderBottom: '1px solid rgba(245,245,240,0.06)',
-                }}
-              >
-                {/* # */}
-                <span style={body(25, 'rgba(245,245,240,0.38)', {
-                  width: 44, textAlign: 'right', flexShrink: 0,
-                  fontFeatureSettings: '"tnum"',
-                })}>{i + 1}</span>
-
-                {/* Name */}
-                <span style={body(25, C.cream, {
-                  flex: 1, overflow: 'hidden', whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis', fontWeight: 700,
-                })}>{name}</span>
-
-                {/* Role chip */}
-                <span style={{
-                  fontFamily: "'Inter', sans-serif",
-                  backgroundColor: chip.bg, color: chip.color,
-                  fontSize: 13, fontWeight: 700,
-                  padding: '4px 12px', borderRadius: 20, flexShrink: 0,
-                  textTransform: 'uppercase', letterSpacing: '0.04em',
-                  whiteSpace: 'nowrap',
-                }}>{formatRolePoster(player.role_primary)}</span>
-
-                {/* Franchise · Year */}
-                <span style={body(21, 'rgba(245,245,240,0.58)', {
-                  flexShrink: 0, whiteSpace: 'nowrap',
-                  fontFeatureSettings: '"tnum"',
-                })}>{code}·{player.season_year}</span>
-
-                {/* Overseas ✈ */}
-                <span style={{
-                  fontSize: 18, width: 28, flexShrink: 0, textAlign: 'center',
-                  color: player.is_overseas ? 'rgba(245,245,240,0.55)' : 'transparent',
-                }}>✈</span>
-
-                {/* Player score */}
-                <span style={body(25, C.saffron, {
-                  width: 78, textAlign: 'right', flexShrink: 0,
-                  fontWeight: 700, fontFeatureSettings: '"tnum"',
-                })}>{fmtScore(player.player_score)}</span>
-              </div>
-            )
-          })}
-        </div>
+      {/* ── Lower region: bonuses + penalties + footer ────────────────────── */}
+      {/* flex: 1 fills all remaining space; footer uses marginTop: auto     */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
 
         {/* 4. Bonuses (only if triggered) */}
         {bonusesTriggered.length > 0 && (
@@ -290,21 +291,22 @@ export function SharePoster({ record, sixerScore, tier, mode, dailyNumber, xi, b
           </div>
         )}
 
-      </div>
+        {/* ── Footer (marginTop: auto pushes it to the bottom of the lower region) ── */}
+        <div style={{
+          marginTop: 'auto',
+          flexShrink: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          paddingTop: 14,
+        }}>
+          <div style={{ width: '60%', height: 1, backgroundColor: C.saffron, opacity: 0.45 }} />
+          <p style={display(52, C.saffron, { letterSpacing: '0.08em', marginTop: 6 })}>SIXER</p>
+          <p style={body(16, 'rgba(245,245,240,0.58)', {
+            letterSpacing: '0.1em', fontWeight: 500,
+            textTransform: 'uppercase',
+          })}>PICK THE XI. CHASE 16-0. SIXER.</p>
+          <p style={body(14, 'rgba(245,245,240,0.38)')}>playsixer.vercel.app</p>
+        </div>
 
-      {/* ── Footer (always at absolute bottom of the flex column) ─────────── */}
-      <div style={{
-        flexShrink: 0,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-        paddingTop: 14,
-      }}>
-        <div style={{ width: '60%', height: 1, backgroundColor: C.saffron, opacity: 0.45 }} />
-        <p style={display(52, C.saffron, { letterSpacing: '0.08em', marginTop: 6 })}>SIXER</p>
-        <p style={body(16, 'rgba(245,245,240,0.58)', {
-          letterSpacing: '0.1em', fontWeight: 500,
-          textTransform: 'uppercase',
-        })}>PICK THE XI. CHASE 16-0. SIXER.</p>
-        <p style={body(14, 'rgba(245,245,240,0.38)')}>playsixer.vercel.app</p>
       </div>
 
     </div>
