@@ -114,9 +114,9 @@ const BONUSES: BonusDef[] = [
   },
   {
     name: 'Death Specialists',
-    value: 3,
+    value: 2,
     description:
-      'Trigger: at least 2 pace bowlers in your XI have a season bowling economy of 7.0 or lower.\nReward: +3 to your team score.',
+      'Trigger: at least 2 pace bowlers in your XI have a season bowling economy of 7.0 or lower.\nReward: +2 to your team score.',
     progress: (xi) => {
       const death = xi.filter(p =>
         p.role_primary === 'Pace Bowler' &&
@@ -155,41 +155,30 @@ const BONUSES: BonusDef[] = [
     },
   },
   {
-    name: 'Anchor + Aggressor',
+    name: 'Twin Anchors',
     value: 2,
     description:
-      'Trigger: at least one top-order batter with a season average of 50 or higher, AND at least one finisher or middle-order batter with a strike rate of 170 or higher.\nReward: +2 to your team score.',
+      'Trigger: 2 or more top-order batters in your XI with a season batting average of 50 or higher.\nReward: +2 to your team score.',
     progress: (xi) => {
-      const hasAnchor = xi.some(p =>
+      const count = xi.filter(p =>
         p.role_primary === 'Top-Order Batter' &&
         p.batting_average != null &&
         p.batting_average >= 50
-      )
-      const hasAggressor = xi.some(p =>
-        (p.role_primary === 'Finisher' || p.role_primary === 'Middle-Order Batter') &&
-        p.batting_strike_rate != null &&
-        p.batting_strike_rate >= 170
-      )
+      ).length
       return {
-        current: (hasAnchor ? 1 : 0) + (hasAggressor ? 1 : 0),
+        current: Math.min(count, 2),
         target: 2,
-        met: hasAnchor && hasAggressor,
-        detail: `${hasAnchor ? '✓' : '○'} anchor · ${hasAggressor ? '✓' : '○'} aggressor`,
+        met: count >= 2,
+        detail: `${count}/2 top-order avg ≥50`,
       }
     },
     isImpossible: (xi) => {
-      if (xi.length < 11) return false
-      const hasAnchor = xi.some(p =>
+      const count = xi.filter(p =>
         p.role_primary === 'Top-Order Batter' &&
         p.batting_average != null &&
         p.batting_average >= 50
-      )
-      const hasAggressor = xi.some(p =>
-        (p.role_primary === 'Finisher' || p.role_primary === 'Middle-Order Batter') &&
-        p.batting_strike_rate != null &&
-        p.batting_strike_rate >= 170
-      )
-      return !(hasAnchor && hasAggressor)
+      ).length
+      return (2 - count) > remaining(xi)
     },
   },
 ]
