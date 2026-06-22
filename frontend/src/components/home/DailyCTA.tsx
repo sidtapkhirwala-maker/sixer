@@ -5,9 +5,6 @@ import { useAuth } from '@/hooks/useAuth'
 import supabase from '@/lib/supabase'
 import { signInWithGoogle } from '@/lib/auth'
 
-function getTodayIST(): string {
-  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10)
-}
 
 const BASE_CLS = [
   'relative flex flex-col justify-center',

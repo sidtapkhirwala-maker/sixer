@@ -243,7 +243,7 @@ export default function Results() {
 
   async function handleShareGrid() {
     const text = generateDailyShareText({
-      dailyNumber: state.dailyNumber ?? 1,
+      dailyNumber: state?.dailyNumber ?? 1,
       record:      `${breakdown.wins}–${breakdown.losses}`,
       sixerScore:  breakdown.sixerScore,
       tier:        breakdown.tier,
