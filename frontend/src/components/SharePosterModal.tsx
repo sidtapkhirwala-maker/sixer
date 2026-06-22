@@ -74,7 +74,7 @@ export function SharePosterModal({ isOpen, onClose, ...posterProps }: SharePoste
       const shareData = {
         files: [file],
         title: `I built a ${posterProps.record} team on Sixer`,
-        text:  `${posterProps.record} · Sixer Score ${posterProps.sixerScore.toFixed(2)} · Tier ${posterProps.tier}\n\nPick the XI. Chase 16-0.\n\nhttps://sixer.app`,
+        text:  `${posterProps.record} · Sixer Score ${posterProps.sixerScore.toFixed(2)} · Tier ${posterProps.tier}\n\nPick the XI. Chase 16-0.\n\nhttps://playsixer.vercel.app`,
       }
 
       if (navigator.canShare && navigator.canShare(shareData)) {

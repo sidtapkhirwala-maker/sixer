@@ -36,6 +36,6 @@ export function generateDailyShareText({
   if (rank !== undefined && totalPlayers !== undefined) {
     lines.push(`Ranked #${rank} of ${totalPlayers} today`)
   }
-  lines.push('', 'https://sixer.app/daily')
+  lines.push('', 'https://playsixer.vercel.app/daily')
   return lines.join('\n')
 }

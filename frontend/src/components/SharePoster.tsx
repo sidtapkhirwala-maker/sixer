@@ -302,7 +302,7 @@ export function SharePoster({ record, sixerScore, tier, mode, dailyNumber, xi, b
           letterSpacing: '0.1em', fontWeight: 500,
           textTransform: 'uppercase',
         })}>PICK THE XI. CHASE 16-0. SIXER.</p>
-        <p style={body(14, 'rgba(245,245,240,0.38)')}>sixer.app</p>
+        <p style={body(14, 'rgba(245,245,240,0.38)')}>playsixer.vercel.app</p>
       </div>
 
     </div>
