@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useDisplayName } from '@/hooks/useDisplayName'
 import { signInWithGoogle, signOut } from '@/lib/auth'
@@ -83,18 +84,36 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <button
-                type="button"
-                onClick={() => signInWithGoogle()}
-                className={[
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full',
-                  'font-body font-bold uppercase tracking-wider text-[10px]',
-                  'border border-subtle text-cream',
-                  'hover:border-saffron hover:text-saffron transition-colors',
-                ].join(' ')}
-              >
-                SIGN IN
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Account menu"
+                    className={[
+                      // Mobile: 32px circular icon button (matches avatar footprint)
+                      'w-8 h-8 rounded-full flex items-center justify-center',
+                      'border border-subtle text-cream',
+                      'hover:border-saffron hover:text-saffron transition-colors',
+                      // Desktop: expand into a text pill
+                      'md:w-auto md:h-auto md:px-3 md:py-1.5 md:gap-1.5',
+                      'md:font-body md:font-bold md:uppercase md:tracking-wider md:text-[10px]',
+                    ].join(' ')}
+                  >
+                    <User className="w-4 h-4 md:hidden" strokeWidth={2} />
+                    <span className="hidden md:inline">SIGN IN</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Welcome to Sixer</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signInWithGoogle()}>
+                    Sign in with Google
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/leaderboard">View leaderboards</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )
           )}
         </nav>
