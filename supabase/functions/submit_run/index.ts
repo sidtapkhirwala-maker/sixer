@@ -79,7 +79,7 @@ function scoreToTier(s: number) {
   return "F"
 }
 
-function computeScore(xi: P[]) {
+function computeScore(xi: P[], mode: string) {
   const rawTeamScore          = xi.reduce((s, p) => s + p.player_score, 0)
   const allLocal          = xi.every(p => !p.is_overseas)
   const spinnerCount      = xi.filter(isSpinner).length
@@ -95,22 +95,20 @@ function computeScore(xi: P[]) {
   ).length
   const spinners       = xi.filter(isSpinner)
   const spinnerWickets = spinners.reduce((s, p) => s + (p.wickets_taken ?? 0), 0)
-  const hasAnchor      = xi.some(p =>
-    p.role_primary === "Top-Order Batter" && p.batting_average !== null && p.batting_average >= 50
-  )
-  const hasAggressor = xi.some(p =>
-    (p.role_primary === "Finisher" || p.role_primary === "Middle-Order Batter") &&
-    p.batting_strike_rate !== null && p.batting_strike_rate >= 170
-  )
+  const twinAnchorCount = xi.filter(p =>
+    p.role_primary === "Top-Order Batter" &&
+    p.batting_average !== null &&
+    p.batting_average >= 50
+  ).length
 
   const bonuses = [
     { points: 2, triggered: allLocal },
     { points: 4, triggered: spinnerCount >= 2 && pacerCount >= 2 && arCount >= 2 },
     { points: 2, triggered: tierStackCount >= 7 },
     { points: 3, triggered: powerHittersCount >= 3 },
-    { points: 3, triggered: deathSpecCount >= 2 },
+    { points: 2, triggered: deathSpecCount >= 2 },
     { points: 2, triggered: spinners.length >= 2 && spinnerWickets >= 35 },
-    { points: 2, triggered: hasAnchor && hasAggressor },
+    { points: 2, triggered: twinAnchorCount >= 2 },
   ]
   const totalBonus = Math.min(15, bonuses.filter(b => b.triggered).reduce((s, b) => s + b.points, 0))
 
@@ -134,7 +132,15 @@ function computeScore(xi: P[]) {
   ]
   const totalPenalty = Math.max(-35, penalties.filter(p => p.triggered).reduce((s, p) => s + p.points, 0))
 
-  const sixerScore = Math.max(0, Math.round((rawTeamScore + totalBonus + totalPenalty)*100)/100)
+  // Classic multiplier 0.956522 chosen so raw 115 → final 110.0 (16-0 threshold).
+  // Adjust this to retune Classic ceiling without touching the SCORE_TO_RECORD curve.
+  const MODE_MULTIPLIER: Record<string, number> = {
+    classic: 0.956522,
+    criciq:  1.00,
+    daily:   1.00,
+  }
+  const multiplier = MODE_MULTIPLIER[mode] ?? 1.00
+  const sixerScore = Math.max(0, Math.round((rawTeamScore + totalBonus + totalPenalty) * multiplier * 100) / 100)
   const record     = scoreToRecord(sixerScore)
   return { sixerScore, rawTeamScore, totalBonus, totalPenalty, wins: record.wins, losses: record.losses, tier: scoreToTier(sixerScore) }
 }
@@ -297,7 +303,7 @@ serve(async (req) => {
     }
 
     // ── Server-side score computation ─────────────────────────────────────────
-    const { sixerScore, rawTeamScore, totalBonus, totalPenalty, wins, losses, tier } = computeScore(resolvedXi)
+    const { sixerScore, rawTeamScore, totalBonus, totalPenalty, wins, losses, tier } = computeScore(resolvedXi, mode)
 
     // ── Personal best check ───────────────────────────────────────────────────
     // Daily runs are unique per user per day — always a "PB" for that slot

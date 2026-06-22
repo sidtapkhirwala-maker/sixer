@@ -81,9 +81,9 @@ const BONUSES = [
   { name: 'COMPLETE ATTACK',    condition: 'At least 2 spinners, 2 pacers, and 2 all-rounders.',                                 value: '+4' },
   { name: 'TIER STACK',         condition: 'Seven or more picks at player score 9.0 or higher.',                                 value: '+2' },
   { name: 'POWER HITTERS',      condition: 'Three or more batters, keepers, or ARs with strike rate ≥175.',                     value: '+3' },
-  { name: 'DEATH SPECIALISTS',  condition: 'Two or more pace bowlers with economy ≤7.0.',                                       value: '+3' },
+  { name: 'DEATH SPECIALISTS',  condition: 'Two or more pace bowlers with economy ≤7.0.',                                       value: '+2' },
   { name: 'SPIN TWINS',         condition: 'Two or more spinners with combined wickets ≥35.',                                   value: '+2' },
-  { name: 'ANCHOR + AGGRESSOR', condition: 'One top-order batter avg ≥50 AND one finisher or middle-order batter SR ≥170.',     value: '+2' },
+  { name: 'TWIN ANCHORS',       condition: '2+ top-order batters with batting average 50+.',                                     value: '+2' },
 ]
 
 const PENALTIES = [

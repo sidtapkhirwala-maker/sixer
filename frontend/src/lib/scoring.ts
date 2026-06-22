@@ -36,7 +36,7 @@ function scoreToTier(score: number): string {
   return 'F'
 }
 
-export function calculateScore(picks: DraftableCard[]): ScoreBreakdown {
+export function calculateScore(picks: DraftableCard[], mode: string = 'classic'): ScoreBreakdown {
   const rawScore = picks.reduce((sum, c) => sum + c.player_score, 0)
 
   // ── Bonuses ──────────────────────────────────────────────────────────────
@@ -63,25 +63,20 @@ export function calculateScore(picks: DraftableCard[]): ScoreBreakdown {
   const spinners = picks.filter(isSpinner)
   const spinnerWickets = spinners.reduce((s, c) => s + (c.wickets_taken ?? 0), 0)
 
-  const hasAnchor = picks.some(c =>
+  const twinAnchorCount = picks.filter(c =>
     c.role_primary === 'Top-Order Batter' &&
     c.batting_average !== null &&
     c.batting_average >= 50
-  )
-  const hasAggressor = picks.some(c =>
-    (c.role_primary === 'Finisher' || c.role_primary === 'Middle-Order Batter') &&
-    c.batting_strike_rate !== null &&
-    c.batting_strike_rate >= 170
-  )
+  ).length
 
   const bonuses: BonusEntry[] = [
     { name: 'LOCAL XI',           points: 2, triggered: allLocal },
     { name: 'COMPLETE ATTACK',    points: 4, triggered: completeAttack },
     { name: 'TIER STACK',         points: 2, triggered: tierStackCount >= 7 },
     { name: 'POWER HITTERS',      points: 3, triggered: powerHittersCount >= 3 },
-    { name: 'DEATH SPECIALISTS',  points: 3, triggered: deathSpecialistsCount >= 2 },
+    { name: 'DEATH SPECIALISTS',  points: 2, triggered: deathSpecialistsCount >= 2 },
     { name: 'SPIN TWINS',         points: 2, triggered: spinners.length >= 2 && spinnerWickets >= 35 },
-    { name: 'ANCHOR + AGGRESSOR', points: 2, triggered: hasAnchor && hasAggressor },
+    { name: 'TWIN ANCHORS',       points: 2, triggered: twinAnchorCount >= 2 },
   ]
   const rawBonus = bonuses.filter(b => b.triggered).reduce((s, b) => s + b.points, 0)
   const totalBonus = Math.min(15, rawBonus)
@@ -109,7 +104,18 @@ export function calculateScore(picks: DraftableCard[]): ScoreBreakdown {
   const rawPenalty = penalties.filter(p => p.triggered).reduce((s, p) => s + p.points, 0)
   const totalPenalty = Math.max(-35, rawPenalty)
 
-  const sixerScore = Math.max(0, rawScore + totalBonus + totalPenalty)
+  // Classic multiplier 0.956522 chosen so raw 115 → final 110.0 (16-0 threshold).
+  // Adjust this to retune Classic ceiling without touching the SCORE_TO_RECORD curve.
+  const MODE_MULTIPLIER: Record<string, number> = {
+    classic: 0.956522,
+    criciq:  1.00,
+    daily:   1.00,
+  }
+  const multiplier = MODE_MULTIPLIER[mode] ?? 1.00
+  const sixerScore = Math.max(
+    0,
+    Math.round((rawScore + totalBonus + totalPenalty) * multiplier * 100) / 100
+  )
   const record = scoreToRecord(sixerScore)
 
   return {

@@ -276,8 +276,8 @@ def compute_style_bonuses(xi):
         and p["bowling_economy"] <= 7.0
     )
     if death_specialists >= 2:
-        bonus += 3
-        triggered.append(("Death Specialists", 3))
+        bonus += 2
+        triggered.append(("Death Specialists", 2))
 
     # Bonus 6: Spin Twins — 2+ spinners with combined wickets_taken >= 35
     spinners = [p for p in xi if p.get("role_primary") == "Spin Bowler"]
@@ -286,22 +286,16 @@ def compute_style_bonuses(xi):
         bonus += 2
         triggered.append(("Spin Twins", 2))
 
-    # Bonus 7: Anchor + Aggressor — elite top-order anchor AND explosive lower-order aggressor
-    has_anchor = any(
-        p.get("role_primary") == "Top-Order Batter"
+    # Bonus 7: Twin Anchors — 2+ top-order batters with batting average >= 50
+    twin_anchor_count = sum(
+        1 for p in xi
+        if p.get("role_primary") == "Top-Order Batter"
         and p.get("batting_average") is not None
         and p["batting_average"] >= 50
-        for p in xi
     )
-    has_aggressor = any(
-        p.get("role_primary") in ("Finisher", "Middle-Order Batter")
-        and p.get("batting_strike_rate") is not None
-        and p["batting_strike_rate"] >= 170
-        for p in xi
-    )
-    if has_anchor and has_aggressor:
+    if twin_anchor_count >= 2:
         bonus += 2
-        triggered.append(("Anchor + Aggressor", 2))
+        triggered.append(("Twin Anchors", 2))
 
     # Cap at +15
     if bonus > 15:
@@ -454,7 +448,7 @@ def _xi_hash_fraction(xi):
 # 7. EVALUATE XI
 # ─────────────────────────────────────────────────────────────────────
 
-def evaluate_xi(xi):
+def evaluate_xi(xi, mode='classic'):
     """
     Master entry point. Given an XI of 11 player dicts, return:
         wins, losses, sixer_score, tier, breakdown
@@ -467,11 +461,19 @@ def evaluate_xi(xi):
     style_bonus, style_triggered = compute_style_bonuses(xi)
     penalty, penalty_triggered = compute_structural_penalties(xi)
 
-    # Final score (deterministic fractional shift for ties via hash)
-    pre_round = raw_team_score + style_bonus - penalty
+    # Classic multiplier 0.956522 chosen so raw 115 → final 110.0 (16-0 threshold).
+    # Adjust this to retune Classic ceiling without touching the SCORE_TO_RECORD curve.
+    MODE_MULTIPLIER = {
+        'classic': 0.956522,
+        'criciq':  1.00,
+        'daily':   1.00,
+    }
+    multiplier = MODE_MULTIPLIER.get(mode, 1.00)
+
+    # Final score: apply multiplier, then deterministic fractional shift for ties
+    raw_final = raw_team_score + style_bonus - penalty
     fraction_shift = (_xi_hash_fraction(xi) - 0.5) * 0.5  # ±0.25
-    final_score = round(pre_round + fraction_shift)
-    final_score = max(final_score, 0)
+    final_score = max(0, round((raw_final * multiplier + fraction_shift) * 100) / 100)
 
     # Derive record and tier
     wins, losses = score_to_record(final_score)

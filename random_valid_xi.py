@@ -58,7 +58,8 @@ def fetch_all_draftable(conn):
             ps.bowling_average,
             ps.bowling_economy,
             ps.balls_bowled,
-            ps.wicketkeeper_override
+            ps.wicketkeeper_override,
+            dp.is_overseas
         FROM draftable_pool dp
         JOIN player_seasons ps
           ON dp.player_name = ps.player_name

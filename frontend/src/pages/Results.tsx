@@ -223,7 +223,7 @@ export default function Results() {
   }
 
   const { picks } = state
-  const breakdown   = calculateScore(picks)
+  const breakdown   = calculateScore(picks, state.mode ?? 'classic')
   const tierColor   = TIER_COLOR[breakdown.tier] ?? 'text-cream'
   const recordColor = TIER_RECORD_COLOR[breakdown.tier] ?? 'text-cream'
   const sortedPicks = sortXI(picks)
