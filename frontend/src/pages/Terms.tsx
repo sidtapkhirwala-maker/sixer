@@ -60,9 +60,10 @@ export default function Terms() {
           <section>
             <h2 className="font-display text-2xl text-cream mb-3">Your account</h2>
             <p className="font-body text-base text-cream/80 leading-relaxed">
-              You can play Sixer as a guest or sign in with Google for a persistent profile. If you
-              sign in, you're responsible for keeping your Google account secure. You can delete your
-              Sixer account at any time from your profile page.
+              You can play Sixer as a guest, but submitting scores to the leaderboard and tracking
+              personal bests requires signing in with Google. If you sign in, you're responsible for
+              keeping your Google account secure. You can delete your Sixer account at any time from
+              your profile page.
             </p>
           </section>
 

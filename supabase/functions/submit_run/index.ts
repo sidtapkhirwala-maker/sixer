@@ -145,12 +145,6 @@ function getISTDate(): string {
   return ist.toISOString().slice(0, 10)
 }
 
-// ── IP hash ────────────────────────────────────────────────────────────────────
-async function hashIp(ip: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(ip))
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("")
-}
-
 // ── Response helper ────────────────────────────────────────────────────────────
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -204,31 +198,20 @@ serve(async (req) => {
       userId = data.user?.id ?? null
     }
 
-    const rawIp  = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
-    const ipHash = await hashIp(rawIp)
-
-    // ── Daily requires sign-in ───────────────────────────────────────────────
-    if (is_daily && !userId) {
-      return json({ error: 'auth_required', message: 'Daily Mode requires sign-in.' }, 401)
+    // ── Require sign-in for all submissions ──────────────────────────────────
+    if (!userId) {
+      return json({ error: 'auth_required', message: 'Sign in to submit your score.' }, 401)
     }
 
-    // ── Rate limiting ────────────────────────────────────────────────────────
+    // ── Rate limiting (40/hr per user) ───────────────────────────────────────
     const oneHourAgo = new Date(Date.now() - 3_600_000).toISOString()
-    const { count } = userId
-      ? await supabaseAdmin
-          .from("sixer_runs")
-          .select("id", { count: "exact", head: true })
-          .gt("created_at", oneHourAgo)
-          .eq("user_id", userId)
-      : await supabaseAdmin
-          .from("sixer_runs")
-          .select("id", { count: "exact", head: true })
-          .gt("created_at", oneHourAgo)
-          .eq("ip_hash", ipHash)
-          .is("user_id", null)
+    const { count } = await supabaseAdmin
+      .from("sixer_runs")
+      .select("id", { count: "exact", head: true })
+      .gt("created_at", oneHourAgo)
+      .eq("user_id", userId)
 
-    const limit = userId ? 40 : 30
-    if ((count ?? 0) >= limit) {
+    if ((count ?? 0) >= 40) {
       return json({ error: "Too many submissions. Try again later." }, 429)
     }
 
@@ -239,11 +222,10 @@ serve(async (req) => {
         return json({ error: "Submission is for a different date." }, 400)
       }
 
-      // userId is guaranteed non-null here (401 guard blocks guests above)
       const { data: existingDaily } = await supabaseAdmin
         .from("sixer_runs")
         .select("id")
-        .eq("user_id", userId!)
+        .eq("user_id", userId)
         .eq("daily_seed_date", todayIST)
         .eq("is_daily", true)
         .maybeSingle()
@@ -291,21 +273,12 @@ serve(async (req) => {
       .sort()
       .join(",")
 
-    const { data: recentRuns } = userId
-      ? await supabaseAdmin
-          .from("sixer_runs")
-          .select("xi")
-          .eq("user_id", userId)
-          .eq("mode", mode)
-          .gt("created_at", sixtySecondsAgo)
-      : await supabaseAdmin
-          .from("sixer_runs")
-          .select("xi")
-          .is("user_id", null)
-          .eq("ip_hash", ipHash)
-          .eq("display_name", name)
-          .eq("mode", mode)
-          .gt("created_at", sixtySecondsAgo)
+    const { data: recentRuns } = await supabaseAdmin
+      .from("sixer_runs")
+      .select("xi")
+      .eq("user_id", userId)
+      .eq("mode", mode)
+      .gt("created_at", sixtySecondsAgo)
 
     if (recentRuns) {
       for (const run of recentRuns) {
@@ -327,59 +300,34 @@ serve(async (req) => {
     const { sixerScore, rawTeamScore, totalBonus, totalPenalty, wins, losses, tier } = computeScore(resolvedXi)
 
     // ── Personal best check ───────────────────────────────────────────────────
-    // Daily runs are guaranteed unique per identity per day, so always a "PB"
+    // Daily runs are unique per user per day — always a "PB" for that slot
     let previousBest: number | null = null
     let isPersonalBest = true
 
-    if (is_daily) {
-      // Skip — unique constraint ensures one daily per identity per day
-    } else {
+    if (!is_daily) {
+      const { data: bestRow } = await supabaseAdmin
+        .from("sixer_runs")
+        .select("sixer_score")
+        .eq("user_id", userId)
+        .eq("mode", mode)
+        .eq("is_personal_best", true)
+        .maybeSingle()
 
-    const { data: bestRow } = userId
-      ? await supabaseAdmin
-          .from("sixer_runs")
-          .select("sixer_score")
-          .eq("user_id", userId)
-          .eq("mode", mode)
-          .eq("is_personal_best", true)
-          .maybeSingle()
-      : await supabaseAdmin
-          .from("sixer_runs")
-          .select("sixer_score")
-          .is("user_id", null)
-          .eq("display_name", name)
-          .eq("ip_hash", ipHash)
-          .eq("mode", mode)
-          .eq("is_personal_best", true)
-          .maybeSingle()
+      if (bestRow) {
+        previousBest   = (bestRow as { sixer_score: number }).sixer_score
+        isPersonalBest = sixerScore > previousBest
+      }
 
-    if (bestRow) {
-      previousBest   = (bestRow as { sixer_score: number }).sixer_score
-      isPersonalBest = sixerScore > previousBest
-    }
-
-    // ── Unmark old personal best before inserting new one ────────────────────
-    if (isPersonalBest && bestRow) {
-      if (userId) {
+      // ── Unmark old personal best before inserting new one ──────────────────
+      if (isPersonalBest && bestRow) {
         await supabaseAdmin
           .from("sixer_runs")
           .update({ is_personal_best: false })
           .eq("user_id", userId)
-          .eq("mode", mode)
-          .eq("is_personal_best", true)
-      } else {
-        await supabaseAdmin
-          .from("sixer_runs")
-          .update({ is_personal_best: false })
-          .is("user_id", null)
-          .eq("display_name", name)
-          .eq("ip_hash", ipHash)
           .eq("mode", mode)
           .eq("is_personal_best", true)
       }
     }
-
-    } // end if (!is_daily) personal-best block
 
     // ── Insert run ────────────────────────────────────────────────────────────
     const xiSnapshot = resolvedXi.map(p => ({
@@ -395,9 +343,9 @@ serve(async (req) => {
       .from("sixer_runs")
       .insert({
         user_id:            userId,
-        is_guest:           !userId,
+        is_guest:           false,
         display_name:       name,
-        ip_hash:            userId ? null : ipHash,
+        ip_hash:            null,
         mode,
         sixer_score:        sixerScore,
         raw_team_score:      rawTeamScore,

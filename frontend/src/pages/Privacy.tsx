@@ -38,10 +38,9 @@ export default function Privacy() {
                   <strong className="text-cream font-bold">If you play as a guest:</strong>
                 </p>
                 <ul className="mt-2 flex flex-col gap-1.5 pl-5 list-disc">
-                  <li className="font-body text-base text-cream/80 leading-relaxed">A display name you choose (stored locally on your device and attached to any leaderboard runs you submit)</li>
-                  <li className="font-body text-base text-cream/80 leading-relaxed">Your XI picks, scores, and game results</li>
-                  <li className="font-body text-base text-cream/80 leading-relaxed">A hashed version of your IP address (used only to rate-limit spam submissions — we can't reverse it to identify you)</li>
-                  <li className="font-body text-base text-cream/80 leading-relaxed">Your browser's user-agent string (used for debugging and abuse prevention)</li>
+                  <li className="font-body text-base text-cream/80 leading-relaxed">Nothing is stored server-side. Scores, records, and XI are computed in your browser and shown locally only. Guest runs do not appear on leaderboards.</li>
+                  <li className="font-body text-base text-cream/80 leading-relaxed">Your in-progress draft is saved in your browser's local storage so a page refresh doesn't wipe it.</li>
+                  <li className="font-body text-base text-cream/80 leading-relaxed">Your browser's user-agent string may be used for debugging and abuse prevention.</li>
                 </ul>
               </div>
               <div>
@@ -67,8 +66,8 @@ export default function Privacy() {
               drafted. That's it. Your email, IP, and user ID are never displayed publicly.
             </p>
             <p className="font-body text-base text-cream/80 leading-relaxed mt-3">
-              If you don't want your runs to appear on the leaderboard, don't submit them — play
-              locally without signing in and don't enter a guest name when prompted.
+              Only signed-in users' runs appear on the leaderboard. Playing as a guest is fully
+              private — no run data is stored server-side.
             </p>
           </section>
 
@@ -78,8 +77,7 @@ export default function Privacy() {
               We use your browser's local storage and session storage for:
             </p>
             <ul className="mt-2 flex flex-col gap-1.5 pl-5 list-disc">
-              <li className="font-body text-base text-cream/80 leading-relaxed">Remembering your guest display name so you don't re-enter it every game</li>
-              <li className="font-body text-base text-cream/80 leading-relaxed">Preventing duplicate submissions of the same draft</li>
+              <li className="font-body text-base text-cream/80 leading-relaxed">Preventing duplicate submissions of the same draft within a session</li>
               <li className="font-body text-base text-cream/80 leading-relaxed">Storing your in-progress draft so a refresh doesn't wipe it</li>
             </ul>
             <p className="font-body text-base text-cream/80 leading-relaxed mt-3">

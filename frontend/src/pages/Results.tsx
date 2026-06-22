@@ -7,8 +7,8 @@ import { sortXI } from '@/lib/sortXI'
 import { formatRoleShort } from '@/lib/roles'
 import { useAuth } from '@/hooks/useAuth'
 import supabase from '@/lib/supabase'
-import GuestNameModal from '@/components/GuestNameModal'
 import { SharePosterModal } from '@/components/SharePosterModal'
+import { signInWithGoogle } from '@/lib/auth'
 import { generateDailyShareText } from '@/lib/dailyShare'
 import type { DraftableCard, DraftMode } from '@/types/draft'
 
@@ -84,7 +84,6 @@ export default function Results() {
 
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle')
   const [userName, setUserName]         = useState<string | null>(null)
-  const [showGuestModal, setShowGuestModal] = useState(false)
   const [runResult, setRunResult]       = useState<RunResult | null>(null)
   const [submitError, setSubmitError]   = useState<string | null>(null)
   const hasSubmitted = useRef(false)
@@ -94,31 +93,19 @@ export default function Results() {
   const [countdown,    setCountdown]      = useState('')
   const [gridCopied,   setGridCopied]     = useState(false)
 
-  // ── Resolve display name for submission ─────────────────────────────────────
+  // ── Resolve display name for submission (signed-in users only) ──────────────
   useEffect(() => {
-    if (authLoading || !state?.picks) return
+    if (authLoading || !state?.picks || !user) return
 
-    if (user) {
-      supabase
-        .from('user_profiles')
-        .select('display_name')
-        .eq('user_id', user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.display_name) {
-            setUserName(data.display_name)
-          } else {
-            // Signed in but no profile yet — fall back to guest flow
-            const cached = localStorage.getItem('sixer_guest_name')
-            if (cached) setUserName(cached)
-            else setShowGuestModal(true)
-          }
-        })
-    } else {
-      const cached = localStorage.getItem('sixer_guest_name')
-      if (cached) setUserName(cached)
-      else setShowGuestModal(true)
-    }
+    supabase
+      .from('user_profiles')
+      .select('display_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.display_name) setUserName(data.display_name)
+        // No profile found: user bypassed onboarding — submission silently skipped
+      })
   }, [authLoading, user, state?.picks])
 
   // ── Auto-submit when name is resolved ────────────────────────────────────────
@@ -151,21 +138,23 @@ export default function Results() {
     return () => clearInterval(id)
   }, [state?.mode])
 
-  // ── Auto-open poster once submission has settled (not while guest name modal may be open) ──
+  // ── Auto-open poster: after submission settles (signed-in) or auth confirms guest ──
   useEffect(() => {
     const submissionSettled =
       submitStatus === 'success' ||
       submitStatus === 'error' ||
       submitStatus === 'already_submitted'
 
-    if (!submissionSettled || hasAutoOpened) return
+    const readyToOpen = submissionSettled || (!authLoading && !user)
+
+    if (!readyToOpen || hasAutoOpened) return
 
     const t = setTimeout(() => {
       setPosterOpen(true)
       setHasAutoOpened(true)
     }, 200)
     return () => clearTimeout(t)
-  }, [submitStatus, hasAutoOpened])
+  }, [submitStatus, hasAutoOpened, authLoading, user])
 
   async function doSubmit(name: string) {
     if (!state?.picks) return
@@ -208,12 +197,6 @@ export default function Results() {
     sessionStorage.setItem(key, JSON.stringify(data))
     setRunResult(data as RunResult)
     setSubmitStatus('success')
-  }
-
-  function handleGuestName(name: string) {
-    localStorage.setItem('sixer_guest_name', name)
-    setShowGuestModal(false)
-    setUserName(name)
   }
 
   function handleRetry() {
@@ -278,8 +261,6 @@ export default function Results() {
 
   return (
     <Layout>
-      {showGuestModal && <GuestNameModal onConfirm={handleGuestName} />}
-
       <div className="max-w-[720px] mx-auto px-4 py-12 md:py-20">
         <div className="flex flex-col gap-10">
 
@@ -452,72 +433,94 @@ export default function Results() {
             </Link>
           </section>
 
-          {/* ── Leaderboards submission status ── */}
+          {/* ── Leaderboards submission status / sign-in nudge ── */}
           <section className="flex flex-col items-center gap-2 text-center min-h-[40px]">
-            {submitStatus === 'submitting' && (
-              <p className="font-body text-xs text-muted animate-pulse">
-                Saving to Leaderboards…
-              </p>
-            )}
-
-            {submitStatus === 'success' && runResult && (
-              <>
-                {runResult.is_personal_best ? (
-                  <p className="font-body text-sm text-pitch">
-                    {runResult.previous_best === null
-                      ? 'Score saved to Leaderboards.'
-                      : `New personal best! Previous: ${formatScore(runResult.previous_best)}`}
-                  </p>
-                ) : (
-                  <p className="font-body text-sm text-muted">
-                    Your best is still {formatScore(runResult.previous_best!)} — run saved.
-                  </p>
-                )}
-                <Link
-                  to={isDaily
-                    ? `/leaderboard?tab=daily&highlight=${runResult.run_id}`
-                    : `/leaderboard?highlight=${runResult.run_id}&mode=${state.mode}`}
-                  className={[
-                    'inline-flex items-center justify-center px-6 py-3 rounded-lg mt-1',
-                    'border border-saffron text-cream font-body text-sm font-bold uppercase tracking-wider',
-                    'hover:bg-saffron hover:text-navy transition-colors duration-150',
-                  ].join(' ')}
-                >
-                  VIEW LEADERBOARDS →
-                </Link>
-              </>
-            )}
-
-            {submitStatus === 'already_submitted' && (
-              <>
-                <p className="font-body text-xs text-muted">
-                  Already saved to Leaderboards.
-                </p>
-                <Link
-                  to="/leaderboard"
-                  className={[
-                    'inline-flex items-center justify-center px-6 py-3 rounded-lg mt-1',
-                    'border border-saffron text-cream font-body text-sm font-bold uppercase tracking-wider',
-                    'hover:bg-saffron hover:text-navy transition-colors duration-150',
-                  ].join(' ')}
-                >
-                  VIEW LEADERBOARDS →
-                </Link>
-              </>
-            )}
-
-            {submitStatus === 'error' && (
-              <>
-                <p className="font-body text-xs text-muted">
-                  Couldn't save — {submitError}
+            {!user && !authLoading ? (
+              <div className="w-full border border-saffron/40 bg-saffron/5 rounded-lg p-4 text-left">
+                <p className="font-body text-sm font-semibold text-cream">Want to compete?</p>
+                <p className="font-body text-xs text-cream/70 mt-1">
+                  Sign in to submit scores to the leaderboard and track personal bests across modes. Your next run will count.
                 </p>
                 <button
                   type="button"
-                  onClick={handleRetry}
-                  className="font-body text-xs text-saffron hover:underline"
+                  onClick={() => { void signInWithGoogle() }}
+                  className={[
+                    'mt-3 inline-flex items-center justify-center px-5 py-2 rounded-lg',
+                    'bg-saffron text-navy font-display text-base',
+                    'hover:opacity-90 transition-opacity',
+                  ].join(' ')}
                 >
-                  RETRY
+                  SIGN IN WITH GOOGLE
                 </button>
+              </div>
+            ) : (
+              <>
+                {submitStatus === 'submitting' && (
+                  <p className="font-body text-xs text-muted animate-pulse">
+                    Saving to Leaderboards…
+                  </p>
+                )}
+
+                {submitStatus === 'success' && runResult && (
+                  <>
+                    {runResult.is_personal_best ? (
+                      <p className="font-body text-sm text-pitch">
+                        {runResult.previous_best === null
+                          ? 'Score saved to Leaderboards.'
+                          : `New personal best! Previous: ${formatScore(runResult.previous_best)}`}
+                      </p>
+                    ) : (
+                      <p className="font-body text-sm text-muted">
+                        Your best is still {formatScore(runResult.previous_best!)} — run saved.
+                      </p>
+                    )}
+                    <Link
+                      to={isDaily
+                        ? `/leaderboard?tab=daily&highlight=${runResult.run_id}`
+                        : `/leaderboard?highlight=${runResult.run_id}&mode=${state.mode}`}
+                      className={[
+                        'inline-flex items-center justify-center px-6 py-3 rounded-lg mt-1',
+                        'border border-saffron text-cream font-body text-sm font-bold uppercase tracking-wider',
+                        'hover:bg-saffron hover:text-navy transition-colors duration-150',
+                      ].join(' ')}
+                    >
+                      VIEW LEADERBOARDS →
+                    </Link>
+                  </>
+                )}
+
+                {submitStatus === 'already_submitted' && (
+                  <>
+                    <p className="font-body text-xs text-muted">
+                      Already saved to Leaderboards.
+                    </p>
+                    <Link
+                      to="/leaderboard"
+                      className={[
+                        'inline-flex items-center justify-center px-6 py-3 rounded-lg mt-1',
+                        'border border-saffron text-cream font-body text-sm font-bold uppercase tracking-wider',
+                        'hover:bg-saffron hover:text-navy transition-colors duration-150',
+                      ].join(' ')}
+                    >
+                      VIEW LEADERBOARDS →
+                    </Link>
+                  </>
+                )}
+
+                {submitStatus === 'error' && (
+                  <>
+                    <p className="font-body text-xs text-muted">
+                      Couldn't save — {submitError}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRetry}
+                      className="font-body text-xs text-saffron hover:underline"
+                    >
+                      RETRY
+                    </button>
+                  </>
+                )}
               </>
             )}
           </section>

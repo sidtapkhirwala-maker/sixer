@@ -325,12 +325,26 @@ export default function Leaderboard() {
           <span className="font-body text-xs text-pitch uppercase tracking-widest">LEADERBOARD</span>
         </div>
         <h1 className="font-display text-5xl text-cream mb-2">LEADERBOARDS</h1>
-        <p className="font-body text-base text-muted mb-8">
+        <p className="font-body text-base text-muted mb-4">
           The highest-scoring XIs. One entry per drafter.
         </p>
 
+        {/* Guest sign-in banner */}
+        {!user && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 border border-saffron/40 bg-saffron/5 rounded-lg px-4 py-3 mb-6">
+            <p className="font-body text-sm text-cream flex-1">Sign in to claim your spot on the leaderboard.</p>
+            <button
+              type="button"
+              onClick={() => { void signInWithGoogle() }}
+              className="font-body text-sm font-bold text-saffron hover:underline whitespace-nowrap shrink-0"
+            >
+              SIGN IN
+            </button>
+          </div>
+        )}
+
         {/* Scope + mode tabs */}
-        <div className="flex items-center justify-between flex-wrap gap-3 mb-6">
+        <div className={`flex items-center justify-between flex-wrap gap-3 mb-6 ${user ? 'mt-4' : ''}`}>
           <div className="flex gap-2">
             <TabBtn active={timeScope === 'today'}    onClick={() => setTimeScope('today')}>Today</TabBtn>
             <TabBtn active={timeScope === 'daily'}    onClick={() => setTimeScope('daily')}>Daily</TabBtn>
