@@ -264,6 +264,7 @@ export function SharePoster({ record, sixerScore, tier, mode, dailyNumber, xi, b
                   border: `1px solid ${C.pitch}`,
                   color: C.pitch, fontSize: 19, fontWeight: 500,
                   padding: '5px 14px', borderRadius: 24,
+                  whiteSpace: 'nowrap',
                 }}>{name}</span>
               ))}
             </div>
@@ -282,6 +283,7 @@ export function SharePoster({ record, sixerScore, tier, mode, dailyNumber, xi, b
                   border: `1px solid ${C.red}`,
                   color: C.red, fontSize: 19, fontWeight: 500,
                   padding: '5px 14px', borderRadius: 24,
+                  whiteSpace: 'nowrap',
                 }}>{name}</span>
               ))}
             </div>

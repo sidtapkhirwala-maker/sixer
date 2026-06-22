@@ -222,7 +222,7 @@ const PENALTIES: PenaltyDef[] = [
     name: 'Thin Batting',
     value: 8,
     description: 'Trigger: fewer than 6 batters, wicketkeepers, or all-rounders in your XI. Penalty: -8.',
-    status: (xi) => (xi.length === 11 && countBattingSide(xi) < 6) ? 'active' : 'clear',
+    status: (xi) => noXStatus(countBattingSide(xi) < 6, xi.length),
     detail: (xi) => `Only ${countBattingSide(xi)} bat-capable players`,
   },
   {
