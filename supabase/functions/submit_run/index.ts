@@ -28,6 +28,7 @@ type P = {
   player_name: string
   display_name: string | null
   season_year: number
+  franchise_id: number
   role_primary: string
   role_category: string
   is_overseas: number | boolean
@@ -249,7 +250,7 @@ serve(async (req) => {
     const playerNames = xi.map((p: { player_name: string }) => p.player_name)
     const { data: dbRows, error: dbErr } = await supabaseAdmin
       .from("draftable_pool")
-      .select("player_name, display_name, season_year, player_score, role_primary, role_category, is_overseas, avg_batting_position, batting_strike_rate, batting_average, bowling_economy, wickets_taken")
+      .select("player_name, display_name, season_year, franchise_id, player_score, role_primary, role_category, is_overseas, avg_batting_position, batting_strike_rate, batting_average, bowling_economy, wickets_taken")
       .in("player_name", playerNames)
 
     if (dbErr || !dbRows) {
@@ -265,6 +266,19 @@ serve(async (req) => {
         return json({ error: `Player not found: ${submitted.player_name} (${submitted.season_year})` }, 400)
       }
       resolvedXi.push(match)
+    }
+
+    // ── Look up franchise short codes ─────────────────────────────────────────
+    const franchiseIds = [...new Set(resolvedXi.map(p => p.franchise_id))]
+    const { data: franchiseRows } = await supabaseAdmin
+      .from("franchises")
+      .select("franchise_id, short_code")
+      .in("franchise_id", franchiseIds)
+    const franchiseShortMap = new Map<number, string>()
+    if (franchiseRows) {
+      for (const f of franchiseRows as { franchise_id: number; short_code: string }[]) {
+        franchiseShortMap.set(f.franchise_id, f.short_code)
+      }
     }
 
     // ── Guard: no duplicate players ───────────────────────────────────────────
@@ -345,6 +359,8 @@ serve(async (req) => {
       is_overseas:          !!p.is_overseas,
       player_score:         p.player_score,
       avg_batting_position: p.avg_batting_position ?? null,
+      season_year:          p.season_year,
+      franchise_short:      franchiseShortMap.get(p.franchise_id) ?? null,
     }))
 
     const { data: inserted, error: insertErr } = await supabaseAdmin

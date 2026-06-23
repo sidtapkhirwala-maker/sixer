@@ -74,21 +74,25 @@ interface RowItemProps {
   isAnchor: boolean
   isExpanded: boolean
   onToggle: () => void
+  xiIsHidden: boolean
 }
 
-function RowItem({ row, rank, isHighlighted, isAnchor, isExpanded, onToggle }: RowItemProps) {
+function RowItem({ row, rank, isHighlighted, isAnchor, isExpanded, onToggle, xiIsHidden }: RowItemProps) {
   const special = isHighlighted || isAnchor
 
   return (
     <div
       id={`row-${row.id}`}
       className={[
-        'cursor-pointer select-none border-b border-l-[3px] transition-colors duration-150',
+        'border-b border-l-[3px] transition-colors duration-150',
+        xiIsHidden ? 'cursor-default' : 'cursor-pointer select-none',
         special
           ? 'border-b-subtle border-l-saffron bg-saffron/10'
-          : 'border-b-subtle border-l-transparent hover:bg-surface/40',
+          : xiIsHidden
+            ? 'border-b-subtle border-l-transparent'
+            : 'border-b-subtle border-l-transparent hover:bg-surface/40',
       ].join(' ')}
-      onClick={onToggle}
+      onClick={xiIsHidden ? undefined : onToggle}
     >
       <div className="flex items-center gap-3 py-3 px-4">
         <span className="font-mono text-xs text-muted w-6 shrink-0 text-right tabular-nums">
@@ -117,28 +121,34 @@ function RowItem({ row, rank, isHighlighted, isAnchor, isExpanded, onToggle }: R
           {row.tier}
         </span>
 
-        <motion.span
-          animate={{ rotate: isExpanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="shrink-0 text-muted"
-        >
-          <ChevronDown size={14} />
-        </motion.span>
+        {xiIsHidden ? (
+          <span className="w-3.5 shrink-0" />
+        ) : (
+          <motion.span
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="shrink-0 text-muted"
+          >
+            <ChevronDown size={14} />
+          </motion.span>
+        )}
       </div>
 
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}
-            style={{ overflow: 'hidden' }}
-          >
-            <XIGrid xi={sortXIByRole(row.xi)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {!xiIsHidden && (
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
+            >
+              <XIGrid xi={sortXIByRole(row.xi)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   )
 }
@@ -433,6 +443,8 @@ export default function Leaderboard() {
             const isHighlighted =
               (!!highlightRunId && row.id === highlightRunId) ||
               (!highlightRunId && !!user && row.user_id === user.id)
+            const isOwnRow = !!(user && row.user_id === user.id)
+            const xiIsHidden = timeScope === 'daily' && !isOwnRow
             return (
               <RowItem
                 key={row.id}
@@ -442,6 +454,7 @@ export default function Leaderboard() {
                 isAnchor={false}
                 isExpanded={expandedRowId === row.id}
                 onToggle={() => toggleRow(row.id)}
+                xiIsHidden={xiIsHidden}
               />
             )
           })}
@@ -463,6 +476,7 @@ export default function Leaderboard() {
                 isAnchor={true}
                 isExpanded={expandedRowId === anchorRow.id}
                 onToggle={() => toggleRow(anchorRow.id)}
+                xiIsHidden={false}
               />
             </>
           )}

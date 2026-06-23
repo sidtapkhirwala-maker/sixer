@@ -11,6 +11,7 @@ import Onboarding   from '@/pages/Onboarding'
 import Leaderboard  from '@/pages/Leaderboard'
 import Profile      from '@/pages/Profile'
 import Daily        from '@/pages/Daily'
+import RunView      from '@/pages/RunView'
 import ScrollToTop from "./components/ScrollToTop"
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/leaderboard"  element={<Leaderboard />} />
         <Route path="/profile"      element={<Profile />}     />
         <Route path="/daily"        element={<Daily />}       />
+        <Route path="/run/:run_id"  element={<RunView />}     />
       </Routes>
     </BrowserRouter>
   )

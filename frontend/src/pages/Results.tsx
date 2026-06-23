@@ -530,6 +530,7 @@ export default function Results() {
       <SharePosterModal
         isOpen={posterOpen}
         onClose={() => setPosterOpen(false)}
+        run_id={runResult?.run_id}
         record={`${breakdown.wins}–${breakdown.losses}`}
         sixerScore={breakdown.sixerScore}
         tier={breakdown.tier}
