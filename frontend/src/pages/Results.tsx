@@ -1,8 +1,14 @@
 import { useRef, useState, useEffect } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { Share2 } from 'lucide-react'
+import { Share2, Info } from 'lucide-react'
 import Layout from '@/components/layout/Layout'
-import { calculateScore } from '@/lib/scoring'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { calculateScore, classicAdjustment } from '@/lib/scoring'
 import { sortXI } from '@/lib/sortXI'
 import { formatRoleShort } from '@/lib/roles'
 import { useAuth } from '@/hooks/useAuth'
@@ -290,6 +296,37 @@ export default function Results() {
             <ScoreLine label="RAW SCORE"  value={formatScore(breakdown.rawScore)} />
             <ScoreLine label="BONUSES"    value={`+${breakdown.totalBonus}`}        valueClass="text-pitch" />
             <ScoreLine label="PENALTIES"  value={String(breakdown.totalPenalty)}    valueClass="text-saffron" />
+            {state.mode === 'classic' && (() => {
+              const adj = classicAdjustment(breakdown.rawScore, breakdown.totalBonus, breakdown.totalPenalty)
+              return Math.abs(adj) >= 0.01 ? (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono text-xs text-muted tracking-wide">CLASSIC MODE</span>
+                    <TooltipProvider delayDuration={0}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="text-cream/40 hover:text-cream/70 transition-colors cursor-help"
+                            aria-label="What is Classic Mode adjustment?"
+                          >
+                            <Info size={13} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          align="center"
+                          className="max-w-xs bg-[#0A0E27] border border-saffron/30 text-cream text-xs leading-relaxed px-3 py-2 shadow-lg"
+                        >
+                          Classic mode shows stats during drafting, so scores are calibrated slightly lower than CricIQ to keep the modes balanced.
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <span className="font-mono text-sm text-saffron">{adj.toFixed(2)}</span>
+                </div>
+              ) : null
+            })()}
             <div className="border-t border-subtle pt-3">
               <ScoreLine
                 label="SIXER SCORE"

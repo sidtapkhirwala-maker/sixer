@@ -6,6 +6,21 @@ import {
   countBattingSide, countBowlingSide,
 } from '@/lib/roles'
 
+// Classic multiplier 0.956522 is set so raw 115 → final 110.0 (16-0 threshold).
+// Adjust only in sync with season_engine.py and submit_run/index.ts.
+export const CLASSIC_MULTIPLIER = 0.956522
+
+// Returns the negative Classic-mode adjustment to display in breakdowns.
+// structuralPenalty should be the negative value from calculateScore (e.g. -15).
+export function classicAdjustment(
+  rawTeamScore: number,
+  styleBonus: number,
+  structuralPenalty: number,
+): number {
+  const preMultiplier = rawTeamScore + styleBonus + structuralPenalty
+  return -(preMultiplier * (1 - CLASSIC_MULTIPLIER))
+}
+
 function scoreToRecord(score: number): { wins: number; losses: number } {
   if (score >= 110) return { wins: 16, losses: 0 }
   if (score >= 107) return { wins: 15, losses: 1 }
@@ -104,10 +119,8 @@ export function calculateScore(picks: DraftableCard[], mode: string = 'classic')
   const rawPenalty = penalties.filter(p => p.triggered).reduce((s, p) => s + p.points, 0)
   const totalPenalty = Math.max(-35, rawPenalty)
 
-  // Classic multiplier 0.956522 chosen so raw 115 → final 110.0 (16-0 threshold).
-  // Adjust this to retune Classic ceiling without touching the SCORE_TO_RECORD curve.
   const MODE_MULTIPLIER: Record<string, number> = {
-    classic: 0.956522,
+    classic: CLASSIC_MULTIPLIER,
     criciq:  1.00,
     daily:   1.00,
   }

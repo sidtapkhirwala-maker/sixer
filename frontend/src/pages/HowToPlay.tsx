@@ -154,6 +154,7 @@ export default function HowToPlay() {
               Every player gets a Player Score from 0 to 11 based on their season stats. Sum your
               XI's player scores, add style bonuses, subtract structural penalties, and you get a
               Sixer Score. That maps to a 16-match season record and a tier letter.
+              In Classic mode, scores are calibrated slightly lower to account for stats being visible during the draft.
             </p>
           </section>
 
@@ -246,6 +247,10 @@ export default function HowToPlay() {
                 <p className="font-body text-sm text-cream mt-3 leading-relaxed">
                   See every player's runs, strike rate, wickets, and economy before you pick.
                   The straightforward way to draft.
+                </p>
+                <p className="font-body text-xs text-muted mt-3 leading-relaxed">
+                  Scores are calibrated slightly lower than CricIQ — stats are visible during drafting,
+                  so the bar to beat is set a touch higher.
                 </p>
               </div>
               <div className="bg-surface border-2 border-pitch rounded-lg p-5">
