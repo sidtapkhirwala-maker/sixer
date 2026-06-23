@@ -11,6 +11,7 @@ export interface XiEntry {
   role_primary: string
   is_overseas: boolean
   player_score: number
+  avg_batting_position?: number | null
 }
 
 // ── Shared helpers ─────────────────────────────────────────────────────────────

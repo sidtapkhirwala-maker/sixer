@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import supabase from '@/lib/supabase'
 import { signInWithGoogle, signOut } from '@/lib/auth'
 import { XIGrid, formatScore, type XiEntry } from '@/components/leaderboard/XIGrid'
+import { sortXIByRole } from '@/lib/sortXI'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -606,7 +607,7 @@ function RecentRunRow({
             transition={{ duration: 0.22, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
           >
-            <XIGrid xi={run.xi} />
+            <XIGrid xi={sortXIByRole(run.xi)} />
           </motion.div>
         )}
       </AnimatePresence>

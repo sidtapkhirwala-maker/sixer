@@ -31,6 +31,7 @@ type P = {
   role_primary: string
   role_category: string
   is_overseas: number | boolean
+  avg_batting_position: number | null
   batting_strike_rate: number | null
   batting_average: number | null
   bowling_economy: number | null
@@ -248,7 +249,7 @@ serve(async (req) => {
     const playerNames = xi.map((p: { player_name: string }) => p.player_name)
     const { data: dbRows, error: dbErr } = await supabaseAdmin
       .from("draftable_pool")
-      .select("player_name, display_name, season_year, player_score, role_primary, role_category, is_overseas, batting_strike_rate, batting_average, bowling_economy, wickets_taken")
+      .select("player_name, display_name, season_year, player_score, role_primary, role_category, is_overseas, avg_batting_position, batting_strike_rate, batting_average, bowling_economy, wickets_taken")
       .in("player_name", playerNames)
 
     if (dbErr || !dbRows) {
@@ -337,12 +338,13 @@ serve(async (req) => {
 
     // ── Insert run ────────────────────────────────────────────────────────────
     const xiSnapshot = resolvedXi.map(p => ({
-      player_name:   p.player_name,
-      display_name:  p.display_name,
-      role_primary:  p.role_primary,
-      role_category: p.role_category,
-      is_overseas:   !!p.is_overseas,
-      player_score:  p.player_score,
+      player_name:          p.player_name,
+      display_name:         p.display_name,
+      role_primary:         p.role_primary,
+      role_category:        p.role_category,
+      is_overseas:          !!p.is_overseas,
+      player_score:         p.player_score,
+      avg_batting_position: p.avg_batting_position ?? null,
     }))
 
     const { data: inserted, error: insertErr } = await supabaseAdmin

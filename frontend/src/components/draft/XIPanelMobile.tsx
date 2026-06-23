@@ -3,6 +3,7 @@ import { ChevronUp } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import XISlot from './XISlot'
 import BonusTracker, { computeTrackerSummary } from './BonusTracker'
+import { sortXI } from '@/lib/sortXI'
 import type { DraftableCard } from '@/types/draft'
 
 function getTrackerSubtext(picks: DraftableCard[]): string {
@@ -12,6 +13,7 @@ function getTrackerSubtext(picks: DraftableCard[]): string {
 }
 
 export default function XIPanelMobile({ picks }: { picks: DraftableCard[] }) {
+  const sorted = sortXI(picks)
   const [expanded, setExpanded] = useState(false)
   const [trackerOpen, setTrackerOpen] = useState(false)
   const touchStartY = useRef(0)
@@ -117,7 +119,7 @@ export default function XIPanelMobile({ picks }: { picks: DraftableCard[] }) {
                           <XISlot
                             key={i}
                             index={i}
-                            card={picks[i] ?? null}
+                            card={sorted[i] ?? null}
                             isNext={i === picks.length && picks.length < 11}
                             isLast={i === 10}
                           />

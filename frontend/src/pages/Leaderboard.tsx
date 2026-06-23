@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import supabase from '@/lib/supabase'
 import { signInWithGoogle } from '@/lib/auth'
 import { XIGrid, formatScore, type XiEntry } from '@/components/leaderboard/XIGrid'
+import { sortXIByRole } from '@/lib/sortXI'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -134,7 +135,7 @@ function RowItem({ row, rank, isHighlighted, isAnchor, isExpanded, onToggle }: R
             transition={{ duration: 0.22, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
           >
-            <XIGrid xi={row.xi} />
+            <XIGrid xi={sortXIByRole(row.xi)} />
           </motion.div>
         )}
       </AnimatePresence>
