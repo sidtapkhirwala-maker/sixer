@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import Home        from '@/pages/Home'
 import Draft       from '@/pages/Draft'
 import Results     from '@/pages/Results'
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/profile"      element={<Profile />}     />
         <Route path="/daily"        element={<Daily />}       />
       </Routes>
+      <Analytics />
     </BrowserRouter>
   )
 }
