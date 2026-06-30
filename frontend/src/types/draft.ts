@@ -28,7 +28,7 @@ export interface DraftableCard {
   one_line_descriptor: string
   player_score: number
   is_overseas: boolean
-  is_wicketkeeper: boolean
+  is_wicketkeeper?: boolean
   avg_batting_position: number | null
   matches_played: number | null
   runs_scored: number | null
