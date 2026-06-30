@@ -22,7 +22,8 @@ export const ROLE_CATEGORY = {
 // Role test functions — ALL use exact string match against database values
 export function isKeeper(c: DraftableCard): boolean {
   return c.role_category === ROLE_CATEGORY.WICKETKEEPER ||
-         c.role_primary === ROLE_PRIMARY.WICKETKEEPER
+         c.role_primary === ROLE_PRIMARY.WICKETKEEPER ||
+         c.is_wicketkeeper === true
 }
 
 export function isSpinner(c: DraftableCard): boolean {

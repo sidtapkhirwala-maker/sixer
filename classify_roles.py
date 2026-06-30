@@ -14,7 +14,11 @@ from collections import defaultdict
 
 DB_PATH  = r"C:\Users\SiddharthTapkhirwala\Desktop\sixer\sixer.db"
 DATA_DIR = r"C:\Users\SiddharthTapkhirwala\Desktop\sixer"
-JSON_DIR = r"C:\Users\SiddharthTapkhirwala\Desktop\sixer\Data" 
+JSON_DIR = r"C:\Users\SiddharthTapkhirwala\Desktop\sixer\Data"
+
+# ── All-rounder classification thresholds (tunable) ──────────────────────────
+AR_MIN_STRIKE_RATE   = 105.0   # batting SR must exceed this to qualify as AR
+AR_MIN_BALLS_PER_MATCH = 6.0  # balls faced per match must meet this floor
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 1 — Compute avg batting position from Cricsheet JSONs
@@ -115,10 +119,12 @@ def classify(cur, batting_positions):
     rows = cur.fetchall()
     print(f"  Classifying {len(rows):,} rows...")
 
-    updates = []
+    updates  = []
+    rescued  = []   # (row_id, player_name, season, bat_avg) for summary
     for (row_id, player_name, season, matches, balls_faced, bat_sr,
          bat_avg, balls_bowled, wickets, runs) in rows:
 
+        batting_strike_rate = bat_sr   # preserve None for AR SR gate
         bat_sr      = bat_sr      or 0.0
         bat_avg     = bat_avg     or 0.0
         balls_faced = balls_faced or 0
@@ -194,10 +200,12 @@ def classify(cur, batting_positions):
         # 4. All-rounder  (bowled >= 24 AND faced >= 48)
         elif (
             matches > 0
-            and balls_bowled / matches >=8
-            and balls_faced / matches >= 5
+            and balls_bowled / matches >= 8
+            and balls_faced / matches >= AR_MIN_BALLS_PER_MATCH
             and balls_bowled >= 48
             and balls_faced >= 48
+            and batting_strike_rate is not None
+            and batting_strike_rate > AR_MIN_STRIKE_RATE
         ):
             wpg = wickets / matches if matches > 0 else 0
             if wpg >= 0.7:
@@ -206,7 +214,19 @@ def classify(cur, batting_positions):
                 role = "Batting All-Rounder"
             draftable = 1
 
-               # 5. Tweener — some bowling, some batting, neither threshold met
+        # 5. Rescued bowler — substantial bowling output but failed AR check
+        #    (SR too low or insufficient batting). Must come after AR elif so
+        #    legitimate ARs aren't intercepted here.
+        elif (
+            matches > 0
+            and balls_bowled / matches >= 8
+            and balls_bowled >= 48
+        ):
+            role = "Pace Bowler"   # bowling_style_override corrects spinners
+            draftable = 1
+            rescued.append((row_id, player_name, season, bat_avg))
+
+        # 6. Tweener — some bowling, some batting, neither threshold met
         else:
             # Bowler-priority guard: if they bowled meaningfully but didn't
             # bat enough per match to be an AR, classify as Bowler first.
@@ -237,6 +257,7 @@ def classify(cur, batting_positions):
         WHERE id = ?
     """, updates)
     print(f"  Updated {len(updates):,} rows.\n")
+    return rescued
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -365,10 +386,89 @@ if __name__ == "__main__":
     add_columns(cur)
     print()
 
+    # Snapshot AR players before reclassification for demotion summary
+    cur.execute("""
+        SELECT id, player_name, season_year, role_primary,
+               batting_strike_rate, balls_faced, matches_played, batting_average
+        FROM player_seasons
+        WHERE role_primary IN ('Batting All-Rounder', 'Bowling All-Rounder')
+    """)
+    old_ar_rows = {row[0]: row for row in cur.fetchall()}
+
     print("Step 4/4 — Classifying roles...")
-    classify(cur, batting_positions)
+    rescued = classify(cur, batting_positions)
 
     conn.commit()
+
+    # ── AR tightening summary ─────────────────────────────────────────────────
+    if old_ar_rows:
+        id_list = list(old_ar_rows.keys())
+        placeholders = ",".join("?" * len(id_list))
+        cur.execute(
+            f"SELECT id, role_primary FROM player_seasons WHERE id IN ({placeholders})",
+            id_list,
+        )
+        new_roles = {row[0]: row[1] for row in cur.fetchall()}
+
+        demoted = [
+            old_ar_rows[pid] for pid in old_ar_rows
+            if new_roles.get(pid) not in ("Batting All-Rounder", "Bowling All-Rounder")
+        ]
+
+        print("\n" + "=" * 65)
+        print("  AR TIGHTENING SUMMARY")
+        print("=" * 65)
+        print(f"  Players demoted from All-Rounder: {len(demoted)} / {len(old_ar_rows)}")
+
+        if demoted:
+            demoted_sorted = sorted(
+                demoted,
+                key=lambda r: (r[7] or 0),   # sort by batting_average desc
+                reverse=True,
+            )[:10]
+            print(f"\n  TOP 10 DEMOTED (by batting avg):")
+            print(f"  {'Player':<28} {'Season':>6}  {'Old Role':<22} {'New Role':<22} {'Bat SR':>7}  {'BF/M':>5}")
+            print(f"  {'-'*28} {'-'*6}  {'-'*22} {'-'*22} {'-'*7}  {'-'*5}")
+            for pid, name, season, old_role, bat_sr, bf, m, bat_avg in demoted_sorted:
+                new_role = new_roles.get(pid) or "?"
+                bfm = f"{bf/m:.1f}" if m else "—"
+                sr_str = f"{bat_sr:.1f}" if bat_sr is not None else "None"
+                print(f"  {name:<28} {season:>6}  {old_role:<22} {new_role:<22} {sr_str:>7}  {bfm:>5}")
+
+    # ── New role distribution ─────────────────────────────────────────────────
+    cur.execute("""
+        SELECT
+            CASE
+                WHEN role_primary IN ('Batting All-Rounder','Bowling All-Rounder') THEN 'All-Rounder (' || role_primary || ')'
+                WHEN role_primary IN ('Top-Order Batter','Middle-Order Batter','Finisher','Wicketkeeper') THEN 'Batter (' || role_primary || ')'
+                WHEN role_primary IN ('Pace Bowler','Spin Bowler') THEN 'Bowler (' || role_primary || ')'
+                ELSE role_primary
+            END AS group_label,
+            COUNT(*) AS cnt
+        FROM player_seasons
+        WHERE is_draftable = 1
+        GROUP BY group_label
+        ORDER BY cnt DESC
+    """)
+    print("\n  DRAFTABLE ROLE DISTRIBUTION (after reclassification):")
+    print(f"  {'Role':<42} {'Count':>6}")
+    print(f"  {'-'*42} {'-'*6}")
+    for label, cnt in cur.fetchall():
+        print(f"  {(label or 'NULL'):<42} {cnt:>6}")
+
+    # ── Rescued bowler summary ────────────────────────────────────────────────
+    print("\n" + "=" * 65)
+    print("  RESCUED FROM BATTER TO BOWLER")
+    print("=" * 65)
+    print(f"  Total rescued: {len(rescued)}")
+    if rescued:
+        top10 = sorted(rescued, key=lambda r: (r[3] or 0), reverse=True)[:10]
+        print(f"\n  TOP 10 RESCUED (by batting avg):")
+        print(f"  {'Player':<28} {'Season':>6}  {'Bat Avg':>7}")
+        print(f"  {'-'*28} {'-'*6}  {'-'*7}")
+        for _, name, season, bat_avg in top10:
+            avg_str = f"{bat_avg:.1f}" if bat_avg else "—"
+            print(f"  {name:<28} {season:>6}  {avg_str:>7}")
 
     print("Running verification...\n")
     verify(cur)

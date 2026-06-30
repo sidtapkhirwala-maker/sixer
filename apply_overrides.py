@@ -97,7 +97,7 @@ SPINNERS = [
     "JE Root",          # RR — occasional off-break
     "MA Agarwal",       # PBKS / SRH — off-break (very minor)
     "Naman Dhir",       # MI — off-break
-    "Kartik Tyagi",     # SRH — off-break (minor)
+
     "Sanvir Singh",     # SRH — left-arm orthodox
     "DG Nalkande",      # GT — off-break  (Darshan Nalkande)
     "MK Lomror",        # RCB / RR — left-arm orthodox
@@ -189,6 +189,7 @@ WICKETKEEPERS = list(dict.fromkeys(w.strip() for w in WICKETKEEPERS if w.strip()
 # ─────────────────────────────────────────────────────────────────────────────
 ROLE_PRIMARY_OVERRIDES = {
     'RE van der Merwe': 'Spin Bowler',  # left-arm orthodox; bowl-AR classified as spinner
+    'Kartik Tyagi':     'Pace Bowler',  # right-arm medium-fast; was wrongly listed in SPINNERS
 }
 
 

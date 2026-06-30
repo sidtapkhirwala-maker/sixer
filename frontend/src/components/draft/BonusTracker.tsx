@@ -121,7 +121,7 @@ const BONUSES: BonusDef[] = [
       const death = xi.filter(p =>
         p.role_primary === 'Pace Bowler' &&
         p.bowling_economy != null &&
-        p.bowling_economy <= 7.0
+        Math.round((p.bowling_economy ?? 0) * 100) / 100 <= 7.0
       ).length
       return { current: Math.min(death, 2), target: 2, met: death >= 2 }
     },
@@ -129,7 +129,7 @@ const BONUSES: BonusDef[] = [
       const death = xi.filter(p =>
         p.role_primary === 'Pace Bowler' &&
         p.bowling_economy != null &&
-        p.bowling_economy <= 7.0
+        Math.round((p.bowling_economy ?? 0) * 100) / 100 <= 7.0
       ).length
       return (2 - death) > remaining(xi)
     },
@@ -158,26 +158,26 @@ const BONUSES: BonusDef[] = [
     name: 'Twin Anchors',
     value: 2,
     description:
-      'Trigger: 2 or more top-order batters in your XI with a season batting average of 50 or higher.\nReward: +2 to your team score.',
+      'Trigger: 2 or more top-order batters or wicketkeepers in your XI with a season batting average of 50 or higher.\nReward: +2 to your team score.',
     progress: (xi) => {
-      const count = xi.filter(p =>
-        p.role_primary === 'Top-Order Batter' &&
+      const eligible = (p: DraftableCard) =>
+        (p.role_primary === 'Top-Order Batter' || isKeeper(p)) &&
         p.batting_average != null &&
         p.batting_average >= 50
-      ).length
+      const count = xi.filter(eligible).length
       return {
         current: Math.min(count, 2),
         target: 2,
         met: count >= 2,
-        detail: `${count}/2 top-order avg ≥50`,
+        detail: `${count}/2 anchors avg ≥50`,
       }
     },
     isImpossible: (xi) => {
-      const count = xi.filter(p =>
-        p.role_primary === 'Top-Order Batter' &&
+      const eligible = (p: DraftableCard) =>
+        (p.role_primary === 'Top-Order Batter' || isKeeper(p)) &&
         p.batting_average != null &&
         p.batting_average >= 50
-      ).length
+      const count = xi.filter(eligible).length
       return (2 - count) > remaining(xi)
     },
   },

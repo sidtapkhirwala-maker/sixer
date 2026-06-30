@@ -269,11 +269,12 @@ def compute_style_bonuses(xi):
         triggered.append(("Power Hitters", 3))
 
     # Bonus 5: Death Specialists — 2+ pace bowlers with bowling economy <= 7.0
+    # Round to 2dp to match card display precision (e.g. 7.004 displays as "7.00" and counts)
     death_specialists = sum(
         1 for p in xi
         if p.get("role_primary") == "Pace Bowler"
         and p.get("bowling_economy") is not None
-        and p["bowling_economy"] <= 7.0
+        and round(p["bowling_economy"], 2) <= 7.0
     )
     if death_specialists >= 2:
         bonus += 2
@@ -286,10 +287,12 @@ def compute_style_bonuses(xi):
         bonus += 2
         triggered.append(("Spin Twins", 2))
 
-    # Bonus 7: Twin Anchors — 2+ top-order batters with batting average >= 50
+    # Bonus 7: Twin Anchors — 2+ top-order batters/keepers with batting average >= 50
     twin_anchor_count = sum(
         1 for p in xi
-        if p.get("role_primary") == "Top-Order Batter"
+        if (p.get("role_primary") == "Top-Order Batter"
+            or p.get("role_category") == "Wicketkeeper"
+            or p.get("is_wicketkeeper"))
         and p.get("batting_average") is not None
         and p["batting_average"] >= 50
     )

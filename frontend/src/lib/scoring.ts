@@ -72,14 +72,14 @@ export function calculateScore(picks: DraftableCard[], mode: string = 'classic')
   const deathSpecialistsCount = picks.filter(c =>
     c.role_primary === 'Pace Bowler' &&
     c.bowling_economy !== null &&
-    c.bowling_economy <= 7.0
+    Math.round(c.bowling_economy * 100) / 100 <= 7.0
   ).length
 
   const spinners = picks.filter(isSpinner)
   const spinnerWickets = spinners.reduce((s, c) => s + (c.wickets_taken ?? 0), 0)
 
   const twinAnchorCount = picks.filter(c =>
-    c.role_primary === 'Top-Order Batter' &&
+    (c.role_primary === 'Top-Order Batter' || isKeeper(c)) &&
     c.batting_average !== null &&
     c.batting_average >= 50
   ).length

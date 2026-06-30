@@ -38,9 +38,10 @@ type P = {
   bowling_economy: number | null
   wickets_taken: number | null
   player_score: number
+  is_wicketkeeper: boolean | null
 }
 
-const isKeeper         = (p: P) => p.role_category === "Wicketkeeper" || p.role_primary === "Wicketkeeper"
+const isKeeper         = (p: P) => p.role_category === "Wicketkeeper" || p.role_primary === "Wicketkeeper" || p.is_wicketkeeper === true
 const isSpinner        = (p: P) => p.role_primary === "Spin Bowler"
 const isPacer          = (p: P) => p.role_primary === "Pace Bowler"
 const isAllRounder     = (p: P) => p.role_category === "All-Rounder"
@@ -93,12 +94,12 @@ function computeScore(xi: P[], mode: string) {
     (p.batting_strike_rate ?? 0) >= 175
   ).length
   const deathSpecCount = xi.filter(p =>
-    p.role_primary === "Pace Bowler" && p.bowling_economy !== null && p.bowling_economy <= 7.0
+    p.role_primary === "Pace Bowler" && p.bowling_economy !== null && Math.round(p.bowling_economy * 100) / 100 <= 7.0
   ).length
   const spinners       = xi.filter(isSpinner)
   const spinnerWickets = spinners.reduce((s, p) => s + (p.wickets_taken ?? 0), 0)
   const twinAnchorCount = xi.filter(p =>
-    p.role_primary === "Top-Order Batter" &&
+    (p.role_primary === "Top-Order Batter" || isKeeper(p)) &&
     p.batting_average !== null &&
     p.batting_average >= 50
   ).length

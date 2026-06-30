@@ -282,6 +282,9 @@ function SignedInProfile({ userId, userCreatedAt }: { userId: string; userCreate
   const criciqBest   = criciqRuns.length > 0  ? Math.max(...criciqRuns.map(r => r.sixer_score))  : null
   const dailyBest    = dailyRuns.length > 0   ? Math.max(...dailyRuns.map(r => r.sixer_score))   : null
   const tierCounts   = TIER_ORDER.map(t => ({ tier: t, count: allRuns.filter(r => r.tier === t).length }))
+  const avgScoreDisplay = totalPlays > 0
+    ? (allRuns.reduce((s, r) => s + r.sixer_score, 0) / totalPlays).toFixed(2)
+    : '—'
 
   if (dataLoading) {
     return (
@@ -404,6 +407,12 @@ function SignedInProfile({ userId, userCreatedAt }: { userId: string; userCreate
               value={bestTier ?? '—'}
               chipCls={bestTier ? (TIER_BADGE[bestTier] ?? '') : ''}
             />
+            <StatCell
+              label="AVG SIXER SCORE"
+              value={avgScoreDisplay}
+              mono
+              subtext={totalPlays > 0 ? `across ${totalPlays} runs` : undefined}
+            />
             <StatCell label="TOTAL WINS"   value={String(totalWins)}   mono />
             <StatCell label="TOTAL LOSSES" value={String(totalLosses)} mono />
           </div>
@@ -498,11 +507,12 @@ function SignedInProfile({ userId, userCreatedAt }: { userId: string; userCreate
 
 // ── StatCell ──────────────────────────────────────────────────────────────────
 
-function StatCell({ label, value, mono, chipCls }: {
+function StatCell({ label, value, mono, chipCls, subtext }: {
   label: string
   value: string
   mono?: boolean
   chipCls?: string
+  subtext?: string
 }) {
   return (
     <div className="bg-surface border border-subtle rounded-xl p-4 flex flex-col gap-1.5">
@@ -512,6 +522,7 @@ function StatCell({ label, value, mono, chipCls }: {
       ) : (
         <p className={`${mono ? 'font-mono' : 'font-display'} text-xl text-cream`}>{value}</p>
       )}
+      {subtext && <p className="font-body text-[10px] text-muted">{subtext}</p>}
     </div>
   )
 }
