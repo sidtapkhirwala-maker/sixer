@@ -464,10 +464,10 @@ def evaluate_xi(xi, mode='classic'):
     style_bonus, style_triggered = compute_style_bonuses(xi)
     penalty, penalty_triggered = compute_structural_penalties(xi)
 
-    # Classic multiplier 0.956522 chosen so raw 115 → final 110.0 (16-0 threshold).
+    # Classic multiplier 0.9401709 chosen so raw 117 → final 110.0 (16-0 threshold).
     # Adjust this to retune Classic ceiling without touching the SCORE_TO_RECORD curve.
     MODE_MULTIPLIER = {
-        'classic': 0.956522,
+        'classic': 0.9401709,
         'criciq':  1.00,
         'daily':   1.00,
     }

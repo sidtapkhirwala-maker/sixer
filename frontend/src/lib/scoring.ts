@@ -6,9 +6,9 @@ import {
   countBattingSide, countBowlingSide,
 } from '@/lib/roles'
 
-// Classic multiplier 0.956522 is set so raw 115 → final 110.0 (16-0 threshold).
+// Classic multiplier 0.9401709 is set so raw 117 → final 110.0 (16-0 threshold).
 // Adjust only in sync with season_engine.py and submit_run/index.ts.
-export const CLASSIC_MULTIPLIER = 0.956522
+export const CLASSIC_MULTIPLIER = 0.9401709
 
 // Returns the negative Classic-mode adjustment to display in breakdowns.
 // structuralPenalty should be the negative value from calculateScore (e.g. -15).
