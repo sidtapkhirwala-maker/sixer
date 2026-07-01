@@ -121,13 +121,14 @@ export function SharePosterModal({ isOpen, onClose, run_id, ...posterProps }: Sh
           return
         }
 
-        // Desktop: framed text + run URL → clipboard
-        const [w, l]  = posterProps.record.split(/[–—-]/).map(s => s.trim())
-        const runUrl  = run_id ? `https://playsixer.vercel.app/run/${run_id}` : 'https://playsixer.vercel.app/daily'
-        const shareText =
-          `I built a ${w}-${l} team on Sixer Daily #${posterProps.dailyNumber ?? '?'}\n` +
-          `Sixer Score ${posterProps.sixerScore.toFixed(2)} · Tier ${posterProps.tier}\n\n` +
-          `Pick the XI. Chase 16-0.\n${runUrl}`
+        // Desktop: emoji grid → clipboard
+        const shareText = generateDailyShareText({
+          dailyNumber: posterProps.dailyNumber ?? 0,
+          record:      posterProps.record,
+          sixerScore:  posterProps.sixerScore,
+          tier:        posterProps.tier,
+          xi:          posterProps.xi,
+        })
         await navigator.clipboard.writeText(shareText)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
@@ -261,7 +262,7 @@ export function SharePosterModal({ isOpen, onClose, run_id, ...posterProps }: Sh
           <button
             type="button"
             onClick={() => void handleShare()}
-            disabled={capturing || (!isMobileDevice() && !run_id)}
+            disabled={capturing || (posterProps.mode !== 'daily' && !isMobileDevice() && !run_id)}
             title={!isMobileDevice() && !run_id ? 'Submitting your run…' : undefined}
             className={[
               'flex-1 flex items-center justify-center gap-2 py-3 rounded-lg',
@@ -270,7 +271,7 @@ export function SharePosterModal({ isOpen, onClose, run_id, ...posterProps }: Sh
             ].join(' ')}
           >
             <Share2 size={16} />
-            <span>{copied ? '✓ COPIED — PASTE ANYWHERE' : capturing ? 'Saving…' : 'Share'}</span>
+            <span>{copied ? '✓ COPIED — PASTE ANYWHERE' : capturing ? 'Saving…' : posterProps.mode === 'daily' ? 'SHARE GRID' : 'Share'}</span>
           </button>
         </div>
 
