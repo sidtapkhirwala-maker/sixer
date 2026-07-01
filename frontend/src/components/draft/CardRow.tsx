@@ -27,7 +27,7 @@ function getStatBlocks(card: DraftableCard): StatBlock[] {
   if (isPacer(card) || isSpinner(card)) {
     return [
       { label: 'WKTS', value: fmt(card.wickets_taken) },
-      { label: 'ECON', value: fmt(card.bowling_economy, 1) },
+      { label: 'ECON', value: fmt(card.bowling_economy, 2) },
       { label: 'AVG',  value: fmt(card.bowling_average, 1) },
     ]
   }
@@ -47,7 +47,7 @@ function getArStatRows(card: DraftableCard): [StatBlock[], StatBlock[]] {
   ]
   const bowling: StatBlock[] = [
     { label: 'WKTS', value: fmt(card.wickets_taken) },
-    { label: 'ECON', value: fmt(card.bowling_economy, 1) },
+    { label: 'ECON', value: fmt(card.bowling_economy, 2) },
     { label: 'AVG',  value: fmt(card.bowling_average, 1) },
   ]
   // Batting AR: batting discipline is primary (top row)
